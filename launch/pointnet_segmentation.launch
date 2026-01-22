@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Arguments for easy configuration -->
+  <arg name="input_topic" default="cloud_registered"
+       doc="Input PointCloud2 topic to subscribe to"/>
+  <arg name="output_topic" default="/pointnet/segmented_points"
+       doc="Output PointCloud2 topic with semantic labels"/>
+  <arg name="model_path" default="$(find pointnet_s3dis)/checkpoints/best_pointnet_s3dis.pth"
+       doc="Path to trained model"/>
+  <arg name="device" default="cuda"
+       doc="Device to run inference on (cuda or cpu)"/>
+  <arg name="chunk_size" default="4096"
+       doc="Number of points to process in each chunk"/>
+  <arg name="overlap_ratio" default="0.1"
+       doc="Overlap ratio between chunks (0.0 to 1.0)"/>
+  <arg name="feature_transform" default="true"
+       doc="Whether model uses feature transformation"/>
+  <arg name="queue_size" default="1"
+       doc="Queue size for ROS subscribers/publishers"/>
+  <arg name="min_points" default="50"
+       doc="Minimum number of points required to process"/>
+  <arg name="rviz" default="true"
+       doc="Whether to launch RViz for visualization"/>
+  <arg name="frame_id" default="map"
+       doc="Reference frame for visualization"/>
+  <arg name="rviz_config" default="$(find pointnet_s3dis)/rviz/pointnet_visualization.rviz"
+       doc="RViz configuration file path"/>
+
+  <!-- Debug arguments -->
+  <arg name="debug_enabled" default="false"
+       doc="Enable debug publishers for intermediate point clouds"/>
+  <arg name="debug_topic_prefix" default="/pointnet/debug"
+       doc="Topic prefix for debug publishers"/>
+  <arg name="debug_publish_input" default="true"
+       doc="Publish raw input point cloud"/>
+  <arg name="debug_publish_normalized" default="true"
+       doc="Publish normalized point cloud"/>
+  <arg name="debug_publish_chunk" default="true"
+       doc="Publish current processing chunk"/>
+
+  <!-- PointNet Segmentation Node -->
+  <node name="pointnet_segmentation"
+        pkg="pointnet_s3dis"
+        type="run_pointnet_node.py"
+        output="screen"
+        respawn="false">
+
+    <!-- Topic configuration -->
+    <param name="input_topic" value="$(arg input_topic)"/>
+    <param name="output_topic" value="$(arg output_topic)"/>
+
+    <!-- Model configuration -->
+    <param name="model_path" value="$(arg model_path)"/>
+    <param name="device" value="$(arg device)"/>
+    <param name="feature_transform" value="$(arg feature_transform)"/>
+
+    <!-- Processing configuration -->
+    <param name="chunk_size" value="$(arg chunk_size)"/>
+    <param name="overlap_ratio" value="$(arg overlap_ratio)"/>
+    <param name="min_points" value="$(arg min_points)"/>
+    <param name="queue_size" value="$(arg queue_size)"/>
+
+    <!-- Debug configuration -->
+    <param name="debug/enabled" value="$(arg debug_enabled)"/>
+    <param name="debug/topic_prefix" value="$(arg debug_topic_prefix)"/>
+    <param name="debug/publish_input" value="$(arg debug_publish_input)"/>
+    <param name="debug/publish_normalized" value="$(arg debug_publish_normalized)"/>
+    <param name="debug/publish_chunk" value="$(arg debug_publish_chunk)"/>
+  </node>
+
+  <!-- RViz for visualization (optional) -->
+  <node name="rviz" pkg="rviz" type="rviz"
+        args="-d $(arg rviz_config)"
+        if="$(arg rviz)"
+        output="screen"/>
+
+</launch>
